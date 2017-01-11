@@ -119,6 +119,8 @@ class Node extends React.Component {
     const matchedNodeDetails = matches.get('metadata', makeList())
       .concat(matches.get('parents', makeList()));
 
+    console.log('Node rendered');
+
     return (
       <g className={nodeClassName} transform={transform}>
 

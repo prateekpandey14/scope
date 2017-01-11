@@ -76,7 +76,7 @@ class NodesChartNodes extends React.Component {
           layoutPrecision={layoutPrecision}
           selectedNodeScale={selectedNodeScale}
           nodeScale={nodeScale}
-          zoomScale={zoomScale}
+          zoomScale={node.get('focused') ? zoomScale : 1}
           dx={node.get('x')}
           dy={node.get('y')} />)}
       </g>
