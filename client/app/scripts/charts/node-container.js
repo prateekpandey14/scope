@@ -11,13 +11,14 @@ class NodeContainer extends React.Component {
     const { dx, dy, focused, layoutPrecision, zoomScale } = this.props;
     const animConfig = [80, 20]; // stiffness, damping
     const other = omit(this.props, 'dx', 'dy');
+    const size = (Math.random() * 2) + 0.3;
 
     return (
       <Motion
         style={{
           x: spring(dx, animConfig),
           y: spring(dy, animConfig),
-          f: spring(1 / zoomScale, animConfig)
+          f: spring(size, animConfig)
         }}>
         {(interpolated) => {
           const transform = `translate(${round(interpolated.x, layoutPrecision)},`

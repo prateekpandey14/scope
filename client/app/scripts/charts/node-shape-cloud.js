@@ -18,15 +18,15 @@ function getExtents(svgPath) {
   return [extent(points, p => p[0]), extent(points, p => p[1])];
 }
 
-export default function NodeShapeCloud({highlighted, size, color}) {
+export default function NodeShapeCloud({highlighted, color}) {
   const [[minx, maxx], [miny, maxy]] = getExtents(CLOUD_PATH);
   const width = (maxx - minx);
   const height = (maxy - miny);
   const cx = width / 2;
   const cy = height / 2;
   const pathSize = (width + height) / 2;
-  const baseScale = (size * 2) / pathSize;
-  const strokeWidth = isContrastMode() ? 6 / baseScale : 4 / baseScale;
+  const baseScale = 2 / pathSize;
+  const strokeWidth = isContrastMode() ? 0.15 / baseScale : 0.10 / baseScale;
 
   const pathProps = v => ({
     d: CLOUD_PATH,
@@ -40,7 +40,7 @@ export default function NodeShapeCloud({highlighted, size, color}) {
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />
-      <circle className="node" r={Math.max(2, (size * 0.125))} />
+      <circle className="node" r={0.125} style={{ strokeWidth: 0.05 }} />
     </g>
   );
 }

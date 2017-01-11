@@ -2,6 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { Map as makeMap, List as makeList } from 'immutable';
+import { zoom, zoomTransform, zoomIdentity } from 'd3-zoom';
+import { select } from 'd3-selection';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
@@ -17,10 +19,8 @@ import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
 import { MIN_NODE_LABEL_SIZE, BASE_NODE_LABEL_SIZE, BASE_NODE_SIZE } from '../constants/styles';
 
-
-function labelFontSize(nodeSize) {
-  return Math.max(MIN_NODE_LABEL_SIZE, (BASE_NODE_LABEL_SIZE / BASE_NODE_SIZE) * nodeSize);
-}
+const SIZE = 50;
+const LABEL_FONT_SIZE = 0.25;
 
 function stackedShape(Shape) {
   const factory = React.createFactory(NodeShapeStack);
@@ -66,6 +66,8 @@ class Node extends React.Component {
       hovered: false,
       matched: false
     };
+
+    this.zoom = zoom().scaleExtent([0.1, 2]).on('zoom', null);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -83,18 +85,20 @@ class Node extends React.Component {
 
   render() {
     const { blurred, focused, highlighted, label, matches = makeMap(), networks,
-      pseudo, rank, subLabel, scaleFactor, transform, exportingGraph,
+      pseudo, rank, subLabel, transform, exportingGraph,
       showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
+    const trans = `${transform} scale(${this.props.scaleFactor})`;
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
-    const labelWidth = nodeScale(scaleFactor * 3);
+    const labelWidth = SIZE * 3;
     const labelOffsetX = -labelWidth / 2;
     const labelDy = (showingNetworks && networks) ? 0.70 : 0.55;
-    const labelOffsetY = nodeScale(labelDy * scaleFactor);
-    const networkOffset = nodeScale(scaleFactor * 0.67);
+    const labelOffsetY = SIZE * labelDy;
+    const networkOffset = SIZE * 0.67;
+    const fontSize = SIZE * LABEL_FONT_SIZE;
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -109,8 +113,6 @@ class Node extends React.Component {
 
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
-    const size = nodeScale(scaleFactor);
-    const fontSize = labelFontSize(size);
     const mouseEvents = {
       onClick: this.handleMouseClick,
       onMouseEnter: this.handleMouseEnter,
@@ -122,7 +124,7 @@ class Node extends React.Component {
     console.log('Node rendered');
 
     return (
-      <g className={nodeClassName} transform={transform}>
+      <g className={nodeClassName} transform={trans}>
 
         {useSvgLabels ?
 
@@ -146,16 +148,13 @@ class Node extends React.Component {
             </div>
           </foreignObject>}
 
-        <g {...mouseEvents} ref={this.saveShapeRef}>
-          <NodeShapeType
-            size={size}
-            color={color}
-            {...this.props} />
+        <g {...mouseEvents} ref={this.saveShapeRef} transform="scale(50)">
+          <NodeShapeType color={color} {...this.props} />
         </g>
 
         {showingNetworks && <NodeNetworksOverlay
           offset={networkOffset}
-          size={size} networks={networks}
+          size={SIZE} networks={networks}
           stack={stack}
         />}
       </g>

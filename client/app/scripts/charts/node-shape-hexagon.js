@@ -29,19 +29,18 @@ function getPoints(h) {
 }
 
 
-export default function NodeShapeHexagon({id, highlighted, size, color, metric}) {
+export default function NodeShapeHexagon({id, highlighted, color, metric}) {
   const pathProps = v => ({
-    d: getPoints(size * v * 2),
-    transform: `translate(-${size * getWidth(v)}, -${size * v})`
+    d: getPoints(v * 2),
+    transform: `translate(-${getWidth(v)}, -${v})`
   });
 
   const shadowSize = 0.45;
 
   const clipId = `mask-${id}`;
-  const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
+  const {height, hasMetric, formattedValue} = getMetricValue(metric);
   const metricStyle = { fill: getMetricColor(metric) };
   const className = classNames('shape', { metrics: hasMetric });
-  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
   // how much the hex curve line interpolator curves outside the original shape definition in
   // percent (very roughly)
   const hexCurve = 0.05;
@@ -50,13 +49,14 @@ export default function NodeShapeHexagon({id, highlighted, size, color, metric})
     <g className={className}>
       {hasMetric && getClipPathDefinition(
         clipId,
-        size * (1 + (hexCurve * 2)),
+        (1 + (hexCurve * 2)),
         height,
-        -(size * hexCurve),
-        (size - height) * (shadowSize * 2)
+        -hexCurve,
+        (1 - height) * (shadowSize * 2)
       )}
-      {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
+      {highlighted && <path
+        className="highlighted" style={{ strokeWidth: 0.02 }} {...pathProps(0.7)} />}
+      <path className="border" stroke={color} style={{ strokeWidth: 0.05 }} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(shadowSize)} />
       {hasMetric && <path
         className="metric-fill"
@@ -65,10 +65,10 @@ export default function NodeShapeHexagon({id, highlighted, size, color, metric})
         {...pathProps(shadowSize)}
       />}
       {highlighted && hasMetric ?
-        <text style={{fontSize}}>
+        <text style={{fontSize: CANVAS_METRIC_FONT_SIZE}}>
           {formattedValue}
         </text> :
-        <circle className="node" r={Math.max(2, (size * 0.125))} />}
+        <circle className="node" r={0.125} style={{ strokeWidth: 0.05 }} />}
     </g>
   );
 }
