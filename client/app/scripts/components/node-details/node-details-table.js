@@ -1,4 +1,3 @@
-import debug from 'debug';
 import React from 'react';
 import classNames from 'classnames';
 import { find, get, union, sortBy, groupBy, concat, debounce, findIndex } from 'lodash';
@@ -124,7 +123,8 @@ export default class NodeDetailsTable extends React.Component {
     this.state = {
       limit: props.limit || NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
       sortedDesc: this.props.sortedDesc,
-      sortedBy: this.props.sortedBy
+      sortedBy: this.props.sortedBy,
+      // hasFocusedRow: false,
     };
     this.updateSorted = this.updateSorted.bind(this);
     this.handleLimitClick = this.handleLimitClick.bind(this);
@@ -146,32 +146,34 @@ export default class NodeDetailsTable extends React.Component {
     this.setState({ limit });
   }
 
-  focusRow(rowIndex, node) {
-    this.setState({
-      focusedRowIndex: rowIndex,
-      focusedNode: node
-    });
-    log(`Focused row ${rowIndex}`);
+  focusRow(rowIndex, node, rowObject) {
+    this.focusedNode = node;
+    this.focusedRowIndex = rowIndex;
+    this.focusedRowObject = rowObject;
+    this.hasFocusedRow = true;
+    // if (!this.state.hasFocusedRow) {
+    //   this.setState({ hasFocusedRow: true });
+    // }
   }
 
   unfocusRow() {
-    if (this.state.focusedRowIndex) {
-      this.setState({
-        focusedRowIndex: null,
-        focusedNode: null
-      });
-      log('Unfocused row');
-    }
+    this.hasFocusedRow = false;
+    // if (this.state.hasFocusedRow) {
+    //   this.setState({ hasFocusedRow: false });
+    // }
   }
 
-  onMouseEnterRow(rowIndex, node) {
+  onMouseEnterRow(rowIndex, node, rowObject) {
+    // this.focusRow(rowIndex, node);
     this.debouncedUnfocusRow.cancel();
-    this.debouncedFocusRow(rowIndex, node);
+    this.debouncedFocusRow(rowIndex, node, rowObject);
   }
 
   onMouseLeaveRow() {
+    // this.unfocusRow();
     this.debouncedFocusRow.cancel();
     this.debouncedUnfocusRow();
+    console.log('Leave');
   }
 
   getColumnHeaders() {
@@ -181,26 +183,29 @@ export default class NodeDetailsTable extends React.Component {
 
   render() {
     const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave } = this.props;
-    const { focusedRowIndex, focusedNode } = this.state;
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
     const sortedDesc = this.state.sortedDesc || defaultSortDesc(sortedByHeader);
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
-    if (focusedRowIndex && focusedRowIndex < nodes.length) {
-      const nodeRowIndex = findIndex(nodes, node => node.id === focusedNode.id);
-      if (nodeRowIndex >= 0) {
-        // If the focused node still exists in the table, we move it
-        // to the hovered row, keeping the rest of the table sorted.
-        moveElement(nodes, nodeRowIndex, focusedRowIndex);
+    if (this.hasFocusedRow) {
+      if (this.focusedRowIndex < nodes.length) {
+        const nodeRowIndex = findIndex(nodes, node => node.id === this.focusedNode.id);
+        if (nodeRowIndex >= 0) {
+          // If the focused node still exists in the table, we move it
+          // to the hovered row, keeping the rest of the table sorted.
+          nodes = moveElement(nodes, nodeRowIndex, this.focusedRowIndex);
+        } else {
+          // Otherwise we insert the dead focused node there, pretending
+          // it's still alive. That enables the users to read off all the
+          // info they want and perhaps even open the details panel. Also,
+          // only if we do this, we can guarantee that mouse hover will
+          // always freeze the table row until we focus out.
+          nodes = insertElement(nodes, this.focusedRowIndex, this.focusedNode);
+        }
       } else {
-        // Otherwise we insert the dead focused node there, pretending
-        // it's still alive. That enables the users to read off all the
-        // info they want and perhaps even open the details panel. Also,
-        // only if we do this, we can guarantee that mouse hover will
-        // always freeze the table row until we focus out.
-        insertElement(nodes, focusedRowIndex, focusedNode);
+        this.focusedRowObject.onMouseLeave();
       }
     }
 
@@ -214,6 +219,15 @@ export default class NodeDetailsTable extends React.Component {
     const className = classNames('node-details-table-wrapper-wrapper', this.props.className);
     const headers = this.getColumnHeaders();
     const styles = getTableColumnsStyles(headers);
+
+    let initialHeight = 28 * Math.max(0, (this.nodeCount || 0) - nodes.length);
+
+    if (!this.hasFocusedRow) {
+      initialHeight = 0;
+      this.nodeCount = nodes.length;
+    }
+
+    // console.log(initialHeight);
 
     return (
       <div className={className} style={this.props.style}>
@@ -241,10 +255,11 @@ export default class NodeDetailsTable extends React.Component {
                   colStyles={styles}
                   columns={columns}
                   onClick={onClickRow}
-                  onMouseEnter={() => { this.onMouseEnterRow(index, node); }}
+                  onMouseEnter={(obj) => { this.onMouseEnterRow(index, node, obj); }}
                   onMouseLeave={this.onMouseLeaveRow}
                   topologyId={topologyId} />
               ))}
+              <div style={{height: initialHeight, opacity: 0}} />
             </tbody>
           </table>
           <ShowMore
