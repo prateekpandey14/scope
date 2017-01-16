@@ -133,7 +133,7 @@ export default class NodeDetailsTable extends React.Component {
     // Use debouncing to prevent event flooding when e.g. crossing fast with mouse cursor
     // over the whole table. That would be expensive as each focus causes table to rerender.
     this.debouncedFocusRow = debounce(this.focusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
-    this.debouncedUnfocusRow = debounce(this.unfocusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
+    this.debouncedUnfocusRow = debounce(this.unfocusRow, 0);
   }
 
   updateSorted(sortedBy, sortedDesc) {
@@ -152,14 +152,14 @@ export default class NodeDetailsTable extends React.Component {
     this.focusedRowObject = rowObject;
     this.hasFocusedRow = true;
     // if (!this.state.hasFocusedRow) {
-    //   this.setState({ hasFocusedRow: true });
+    this.setState({ hasFocusedRow: true });
     // }
   }
 
   unfocusRow() {
     this.hasFocusedRow = false;
     // if (this.state.hasFocusedRow) {
-    //   this.setState({ hasFocusedRow: false });
+    this.setState({ hasFocusedRow: false });
     // }
   }
 
@@ -189,6 +189,12 @@ export default class NodeDetailsTable extends React.Component {
     const sortedDesc = this.state.sortedDesc || defaultSortDesc(sortedByHeader);
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
+    if (this.hasFocusedRow && nodes.length < this.rowsCount) {
+      for (let i = nodes.length; i < this.rowsCount; i += 1) {
+        nodes.push({});
+      }
+    }
+
     if (this.hasFocusedRow) {
       if (this.focusedRowIndex < nodes.length) {
         const nodeRowIndex = findIndex(nodes, node => node.id === this.focusedNode.id);
@@ -220,14 +226,9 @@ export default class NodeDetailsTable extends React.Component {
     const headers = this.getColumnHeaders();
     const styles = getTableColumnsStyles(headers);
 
-    let initialHeight = 28 * Math.max(0, (this.nodeCount || 0) - nodes.length);
-
     if (!this.hasFocusedRow) {
-      initialHeight = 0;
-      this.nodeCount = nodes.length;
+      this.rowsCount = nodes.length;
     }
-
-    // console.log(initialHeight);
 
     return (
       <div className={className} style={this.props.style}>
@@ -259,7 +260,6 @@ export default class NodeDetailsTable extends React.Component {
                   onMouseLeave={this.onMouseLeaveRow}
                   topologyId={topologyId} />
               ))}
-              <div style={{height: initialHeight, opacity: 0}} />
             </tbody>
           </table>
           <ShowMore

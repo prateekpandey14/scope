@@ -194,7 +194,7 @@ class DebugToolbar extends React.Component {
     } else {
       this.intermittentTimer = setInterval(() => {
         // add new node
-        this.addNodes(1);
+        // this.addNodes(1);
 
         // remove random node
         const ns = this.props.nodes;

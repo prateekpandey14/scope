@@ -135,6 +135,10 @@ export default class NodeDetailsTableRow extends React.Component {
     const nodeId = node[nodeIdKey];
     const className = classNames('node-details-table-node', { selected, focused });
 
+    if (!node.id) {
+      return <tr className="node-details-table-dummynode" />;
+    }
+
     return (
       <tr
         onMouseDown={onClick && this.onMouseDown}

@@ -944,6 +944,7 @@ h2 {
       font-size: 105%;
       line-height: 1.5;
 
+      // TODO: Consider removing this.
       &:hover, &.selected {
         background-color: lighten(@background-color, 5%);
       }
@@ -951,8 +952,6 @@ h2 {
       > * {
         padding: 0 4px;
       }
-
-      td { height: 26px; }
 
       &-link {
         .btn-opacity;
@@ -1787,8 +1786,16 @@ h2 {
       padding: 3px 4px;
     }
 
-    .node-details-table-node, thead tr {
-      height: 24px;
+    tr {
+      height: 28px;
+    }
+
+    .node-details-table-node {
+      cursor: pointer;
+    }
+
+    .node-details-table-dummynode {
+      background: rgba(0, 0, 0, 0) !important;
     }
 
     tr:nth-child(even) {
@@ -1798,7 +1805,6 @@ h2 {
     tbody tr {
       border: 1px solid transparent;
       border-radius: 4px;
-      cursor: pointer;
     }
 
     tbody tr.selected, tbody tr.focused {

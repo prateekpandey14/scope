@@ -63,7 +63,7 @@ function renderIdCell(props) {
 
   return (
     <div title={props.label} className="nodes-grid-id-column">
-      <div style={iconStyle}><i className="fa fa-square" /></div>
+      {props.rank && <div style={iconStyle}><i className="fa fa-square" /></div>}
       <div className="truncate">
         {props.label} {showSubLabel &&
           <span className="nodes-grid-label-minor">{props.labelMinor}</span>}
